@@ -1,0 +1,185 @@
+<Window x:Class="MiniPdm.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mini-PDM состав изделия" Width="1280" Height="760" MinWidth="900" MinHeight="500"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="Label">
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="Margin" Value="0,4,8,4"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Верхняя панель -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8">
+            <Button Content="Импорт папки…" Command="{Binding ImportCommand}"/>
+            <Button Content="Отмена" Command="{Binding ImportCancelCommand}"/>
+            <Button Content="Отчёт об импорте" Command="{Binding ShowLastReportCommand}"/>
+        </StackPanel>
+
+        <!-- Строка состояния -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem Content="{Binding StatusText}"/>
+            <StatusBarItem HorizontalAlignment="Right">
+                <ProgressBar Width="200" Height="14" Minimum="0" Maximum="{Binding ProgressMax}"
+                             Value="{Binding ProgressValue}">
+                    <ProgressBar.Style>
+                        <Style TargetType="ProgressBar">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ProgressBar.Style>
+                </ProgressBar>
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Margin="8,0,8,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" MinWidth="180"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*" MinWidth="250"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="420" MinWidth="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Поиск и список объектов -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top" Text="Поиск по обозначению или наименованию" Margin="0,0,0,4"/>
+                <TextBox DockPanel.Dock="Top" Margin="0,0,0,6"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                <ListBox ItemsSource="{Binding Objects}" SelectedItem="{Binding SelectedObject}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Foreground="Gray" FontSize="11">
+                                    <Run Text="{Binding Type, Mode=OneWay}"/>
+                                    <Run Text="  v"/><Run Text="{Binding VersionNo, Mode=OneWay}"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch"/>
+
+            <!-- Дерево состава -->
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top" Text="Состав изделия" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <TreeView ItemsSource="{Binding TreeRoots}">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <TextBlock Text="{Binding Header}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasMissingMass}" Value="True">
+                                                <Setter Property="Background" Value="#FFFFE08A"/>
+                                                <Setter Property="Foreground" Value="#FF9A1B1B"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch"/>
+
+            <!-- Карточка, расчёты, спецификация -->
+            <Grid Grid.Column="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <GroupBox Grid.Row="0" Header="Карточка объекта">
+                    <Grid DataContext="{Binding Card}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                            <RowDefinition/><RowDefinition/><RowDefinition Height="Auto"/><RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Тип" Style="{StaticResource Label}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TypeText}" Margin="0,4"/>
+                        <TextBlock Grid.Row="1" Text="Обозначение" Style="{StaticResource Label}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Designation}" Margin="0,4"/>
+                        <TextBlock Grid.Row="2" Text="Наименование" Style="{StaticResource Label}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Name}" TextWrapping="Wrap" Margin="0,4"/>
+                        <TextBlock Grid.Row="3" Text="Материал" Style="{StaticResource Label}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Material}" Margin="0,4"/>
+                        <TextBlock Grid.Row="4" Text="Масса" Style="{StaticResource Label}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Mass}" Margin="0,4"/>
+                        <TextBlock Grid.Row="5" Text="Версия" Style="{StaticResource Label}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CurrentVersionText}" Margin="0,4"/>
+                        <DataGrid Grid.Row="6" Grid.ColumnSpan="2" Height="110" IsReadOnly="True" AutoGenerateColumns="False"
+                                  HeadersVisibility="Column" ItemsSource="{Binding Versions}"
+                                  SelectedItem="{Binding SelectedVersion}" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="№" Binding="{Binding VersionNo}" Width="35"/>
+                                <DataGridTextColumn Header="Состояние" Binding="{Binding StateText}" Width="*"/>
+                                <DataGridTextColumn Header="Масса" Binding="{Binding Mass}" Width="60"/>
+                                <DataGridTextColumn Header="Создана" Binding="{Binding CreatedAt}" Width="110"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <StackPanel Grid.Row="7" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button Content="Утвердить" Command="{Binding DataContext.ApproveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    IsEnabled="{Binding CanApprove}"/>
+                            <Button Content="Аннулировать" Command="{Binding DataContext.AnnulCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    IsEnabled="{Binding CanAnnul}"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <GroupBox Grid.Row="1" Header="Расчёты для выбранной сборки">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Рассчитать массу" Command="{Binding CalculateMassCommand}"/>
+                            <Button Content="Спецификация" Command="{Binding ShowBomCommand}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding MassText}" TextWrapping="Wrap" Margin="0,6,0,0" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Grid.Row="2" Header="Сводная спецификация">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Bottom" Text="{Binding BomText}" Margin="0,4,0,0"/>
+                        <DataGrid ItemsSource="{Binding BomLines}" IsReadOnly="True" AutoGenerateColumns="False"
+                                  HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Обозначение" Binding="{Binding Designation}" Width="110"/>
+                                <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="Кол." Binding="{Binding Quantity}" Width="45"/>
+                                <DataGridTextColumn Header="Масса, кг" Binding="{Binding UnitMassKg, StringFormat={}{0:0.###}}" Width="70"/>
+                                <DataGridTextColumn Header="Итого, кг" Binding="{Binding TotalMassKg, StringFormat={}{0:0.###}}" Width="70"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </GroupBox>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -1,0 +1,56 @@
+<Window x:Class="MiniPdm.App.Views.ImportReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Отчёт об импорте" Width="920" Height="580" WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="12">
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Folder}" Foreground="Gray" Margin="0,0,0,8"/>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+            <Border Background="#FFD9F2DC" CornerRadius="10" Padding="10,2" Margin="0,0,8,0">
+                <TextBlock FontWeight="SemiBold" Foreground="#FF1E6B2B">
+                    <Run Text="Принято: "/><Run Text="{Binding AcceptedCount, Mode=OneWay}"/>
+                </TextBlock>
+            </Border>
+            <Border Background="#FFFBDADA" CornerRadius="10" Padding="10,2" Margin="0,0,8,0">
+                <TextBlock FontWeight="SemiBold" Foreground="#FF9A1B1B">
+                    <Run Text="Ошибок: "/><Run Text="{Binding RejectedCount, Mode=OneWay}"/>
+                </TextBlock>
+            </Border>
+            <Border Background="#FFFFF0B8" CornerRadius="10" Padding="10,2">
+                <TextBlock FontWeight="SemiBold" Foreground="#FF7A5A00">
+                    <Run Text="Предупреждений: "/><Run Text="{Binding WarningCount, Mode=OneWay}"/>
+                </TextBlock>
+            </Border>
+        </StackPanel>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0" LastChildFill="False">
+            <TextBlock DockPanel.Dock="Left" Text="Показать:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <ComboBox DockPanel.Dock="Left" Width="160" ItemsSource="{Binding Filters}"
+                      SelectedItem="{Binding SelectedFilter}"/>
+            <Button DockPanel.Dock="Right" Content="Закрыть" IsCancel="True" Padding="16,4"/>
+            <Button DockPanel.Dock="Right" Content="Сохранить в файл…" Command="{Binding SaveCommand}"
+                    Padding="12,4" Margin="0,0,8,0"/>
+        </DockPanel>
+
+        <DataGrid ItemsSource="{Binding Rows}" IsReadOnly="True" AutoGenerateColumns="False">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Result}" Value="Ошибка">
+                            <Setter Property="Background" Value="#FFFDE7E7"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Result}" Value="Предупреждение">
+                            <Setter Property="Background" Value="#FFFFF6D6"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Файл" Binding="{Binding File}" Width="250"/>
+                <DataGridTextColumn Header="Результат" Binding="{Binding Result}" Width="110"/>
+                <DataGridTextColumn Header="Причина" Binding="{Binding Reason}" Width="*"/>
+                <DataGridTextColumn Header="Действие" Binding="{Binding Action}" Width="220"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
